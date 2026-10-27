@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.*
+*.pem
+*.key
+*service-account*
+*serviceAccount*
+fb_admin_keys*.json
+clickhouse-user-config.xml
+clickhouse-salah.xml
