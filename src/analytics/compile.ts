@@ -11,10 +11,7 @@ export type TimeRange = {
   to: string;
 };
 
-/**
- * The dashboard's question.
- * `projectId` is whatever the caller sent. Auth did not choose it.
- */
+/** Caller-supplied projectId. Auth did not choose it. */
 export type AnalyticsQuery = {
   metric: Metric;
   dimensions: Dimension[];
@@ -38,11 +35,9 @@ export const AGGREGATE: Record<Metric, string> = {
 const SAMPLE = 1_000_000;
 
 /**
- * Historical compiler. Values are interpolated, and this function does not escape them.
- * A cleaner upstream replaced quotes in filter values only. The project id never went through it.
- * Visitors are uniq(user_id), not visitor_id. uniq is approximate, then scaled by the sample factor.
- * The project predicate is on both sides of the join so each table is reduced first.
- * A string filter is a prefix match.
+ * Values are interpolated and not escaped. projectId never went through the quote cleaner.
+ * uniq(user_id) is approximate, then scaled by the sample factor.
+ * Project predicate is on both sides of the join. String filters are prefix matches.
  */
 export function compileHistorical(query: AnalyticsQuery): string {
   const project = `'${query.projectId}'`;

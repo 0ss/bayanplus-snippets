@@ -10,21 +10,16 @@ export type Profile = KnownUserLink & {
   sign: 1 | -1;
 };
 
-/**
- * Profiles lived in ClickHouse as collapsing rows, not in Firestore.
- * The mutation runs only when this visitor has no profile, or the id changed.
- */
+/** Collapsing profile rows. Write only when missing or the user id changed. */
 export interface ProfileStore {
   find(visitorId: VisitorId, projectId: ProjectId): Promise<Profile | null>;
   write(row: Profile): Promise<void>;
 }
 
 /**
- * Historical stitch. ALTER UPDATE user_id on past events and sessions.
+ * ALTER UPDATE user_id on past events and sessions. visitor_id is not rewritten.
  * Queries that count user_id change when the mutation finishes, with no new traffic.
- * visitor_id is not rewritten. The statement inlines every value.
- * ClickHouse applies the mutation in the background.
- * Profile metadata could change with the same user id. That rewrote the profile only.
+ * Mutation runs in the background; reads can disagree until it finishes. Values are inlined.
  */
 export class UserIdRewrite {
   constructor(

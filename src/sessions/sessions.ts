@@ -27,11 +27,9 @@ export type EventContext = {
 };
 
 /**
- * The open row is whatever findActive returns.
- * The 30 minute window is that query: updated_at later than now minus inactivity.
+ * The open row is whatever findActive returns. The 30 minute window lives in that query.
  * This service does not check the window a second time.
- * The live query also took SAMPLE 1000000. Above that many rows, the open
- * session can be missed and a second session is created.
+ * SAMPLE 1e6 can miss the open session and create a second one.
  */
 export interface SessionRepository {
   findActive(
@@ -43,7 +41,7 @@ export interface SessionRepository {
   write(row: Session): Promise<void>;
 }
 
-/** Live ids came from ClickHouse rand32(), one number per new session. */
+/** New session ids from rand32(). */
 export interface SessionIds {
   next(): number;
 }

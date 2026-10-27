@@ -13,11 +13,9 @@ import { SessionService, type EventContext } from "../sessions/sessions";
 import { UserIdRewrite } from "../stitching/rewrite";
 
 /**
- * One envelope in, one insert out.
  * Drops return without throwing, so the queue does not retry them.
- * A thrown insert is recorded and swallowed, so a retrier waiting on this
- * worker sees success. The ack already went out.
- * The new row uses the known user id immediately. rewrite() is the past.
+ * A thrown insert is recorded and swallowed, so a retrier waiting on this worker sees success.
+ * The ack already went out. rewrite() covers past rows; the new row uses the known user id now.
  */
 export class EventWorker {
   constructor(

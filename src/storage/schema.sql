@@ -1,11 +1,8 @@
 -- Events are facts. Sessions are derived state: sign collapses a version.
 -- The session order key is the collapse key. created_at stays when a session is extended.
 -- uniq() is approximate. One insert per event; ClickHouse prefers batches.
--- Teaching key: project, then time, then visitor, with SAMPLE BY on the visitor.
--- The live event table ordered by event name first and did not declare SAMPLE BY.
--- Queries sampled anyway. The live session table partitioned by updated_at.
--- ip is here because the address was stored, not only hashed.
--- Scans and uniqs are why this is a column store. Volume was not measured.
+-- ORDER BY project, time, visitor, with SAMPLE BY on the visitor.
+-- ip is stored, not only hashed. Column store for scans and uniqs.
 
 CREATE TABLE event (
   project_id String,

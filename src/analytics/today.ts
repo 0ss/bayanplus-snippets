@@ -1,10 +1,8 @@
 import { AGGREGATE, COLUMN, type AnalyticsQuery } from "./compile";
 
 /**
- * TODAY. Not what BayanPlus ran.
- * Values stay in `params`. `tenant` is the authenticated project.
- * The question type still has a caller projectId on the historical path.
- * This function does not read it.
+ * Values stay in params. tenant is the authenticated project.
+ * Does not read the caller projectId on the question type.
  */
 export type CompiledQuery = {
   sql: string;

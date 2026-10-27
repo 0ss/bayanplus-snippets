@@ -10,13 +10,13 @@ export const asVisitorId = (value: number): VisitorId => value as VisitorId;
 export const asFingerprint = (value: number): BrowserFingerprint => value as BrowserFingerprint;
 export const asEdgeIp = (value: string): EdgeIp => value as EdgeIp;
 
-/** Headers our edge attached. The API stored them. It did not prove the edge set them. */
+/** Headers the edge attached. Stored, not proven. */
 export type EdgeContext = {
   ip: EdgeIp;
   country: string;
 };
 
-/** What the page sent. No client event id. No client event time. No device string. */
+/** What the page sent. No client event id, event time, or device. */
 export type IncomingHit = {
   projectId?: string;
   name?: string;
@@ -33,7 +33,7 @@ export type EventId = string & { readonly [brand]: "EventId" };
 
 /**
  * In memory after accept, not a row. receivedAt is the accept clock.
- * The live INSERT used ClickHouse now() at write, so a backed-up queue dates the row later.
+ * A backed-up queue can date the ClickHouse row later than this stamp.
  */
 export type EventEnvelope = {
   eventId: EventId;
@@ -50,7 +50,7 @@ export type EventEnvelope = {
   country: string;
 };
 
-/** Drop checks passed. device comes from the user agent, not from the page. */
+/** Drop checks passed. device comes from the user agent, not the page. */
 export type ValidEvent = EventEnvelope & {
   projectId: ProjectId;
   name: string;
@@ -66,9 +66,8 @@ export type DropReason =
   | "excluded";
 
 /**
- * HTTP 200 from accept.
- * `received` means the envelope is in process memory.
- * It does not mean ClickHouse has a row.
+ * Historical behavior: ACK happened before durable storage.
+ * `received` means the envelope is in process memory, not that ClickHouse has a row.
  */
 export type Ack = {
   readonly httpStatus: 200;
@@ -103,7 +102,7 @@ export interface ProjectRecord {
   domain: string;
 }
 
-/** Control plane. Firestore held projects, members, and the fingerprint blacklist. */
+/** Control plane: projects, members, and the fingerprint blacklist. */
 export interface ProjectDirectory {
   lookup(id: ProjectId): Promise<ProjectRecord | null>;
   fingerprintExcluded(id: ProjectId, fingerprint: BrowserFingerprint): Promise<boolean>;
@@ -114,7 +113,7 @@ export interface UserAgentParser {
   parse(userAgent: string): { bot: boolean; device: string };
 }
 
-/** One row per call. The historical writer did not batch. */
+/** One row per call. No batching. */
 export interface EventRepository {
   insert(row: StoredEvent): Promise<void>;
 }

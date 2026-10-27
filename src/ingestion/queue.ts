@@ -3,19 +3,15 @@ import type { EventEnvelope } from "../domain/model";
 export const WORKER_CONCURRENCY = 10;
 
 export interface EventQueue {
-  /**
-   * Returns once the envelope is in process memory.
-   * A failure in the worker does not reject this method.
-   */
+  /** Returns once the envelope is in process memory. Worker failure does not reject this. */
   enqueue(envelope: EventEnvelope): void;
 }
 
 type Worker = (envelope: EventEnvelope) => Promise<void>;
 
 /**
- * One list, one process, ten workers.
- * No cap. A crash drops whatever is still here.
- * Nothing is requeued: a failed worker is logged by the worker and returns.
+ * One list, one process, ten workers. No cap. A crash drops whatever is still here.
+ * Nothing is requeued: a failed worker is logged and returns.
  */
 export class InMemoryEventQueue implements EventQueue {
   private readonly pending: EventEnvelope[] = [];
@@ -51,10 +47,8 @@ export class InMemoryEventQueue implements EventQueue {
 const ENQUEUE_ATTEMPTS = 5;
 
 /**
- * The live retrier wrapped the push: five attempts, five seconds apart in production.
- * The worker catches, so that promise succeeds and the extra attempts never run.
- * enqueue() here returns once the array has the envelope, which is also before
- * the worker. A failed insert cannot enter this loop.
+ * Five attempts on enqueue only. The worker catches, so insert failures never enter this loop.
+ * enqueue() returns once the array has the envelope, before the worker runs.
  */
 export class EnqueueRetrier {
   constructor(private readonly queue: EventQueue) {}

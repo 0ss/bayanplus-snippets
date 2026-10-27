@@ -20,8 +20,7 @@ export type Validation =
   | { ok: false; reason: DropReason };
 
 /**
- * Runs on the worker, after the ack.
- * A drop returns. It does not throw, so the queue treats it as done.
+ * Runs on the worker, after the ack. A drop returns without throwing so the queue treats it as done.
  * Domain uses host.includes(domain): a host that contains the string passes.
  */
 export async function validateEnvelope(
@@ -60,10 +59,7 @@ export class IngestionService {
     private readonly telemetry: Telemetry,
   ) {}
 
-  /**
-   * The envelope is in memory before this returns.
-   * Identity, the session write, and the insert have not run.
-   */
+  /** Envelope is in memory before this returns. Identity, session, and insert have not run. */
   async accept(hit: IncomingHit): Promise<Ack> {
     await this.retry.submit(stamp(hit, this.clock.now()));
     this.telemetry.record("ack");
@@ -96,7 +92,7 @@ function stamp(hit: IncomingHit, now: Date): EventEnvelope {
   };
 }
 
-/** New on every accept. The live worker minted this after the drop checks, with nanoid. */
+/** Fresh id on every accept. */
 function mintEventId(): string {
   return Math.random().toString(36).slice(2, 16);
 }

@@ -7,8 +7,7 @@ import {
 } from "../domain/model";
 
 /**
- * Signals the page hashed, in the page, with seed 256.
- * The server stored the number, not the canvas.
+ * Signals the page hashed with seed 256. Server stores the number, not the canvas.
  * If that hash threw, the page sent cyrb53 of a random string instead.
  */
 export type IdentitySignals = {
@@ -68,8 +67,7 @@ export type Collision =
   | { kind: "identity"; detail: "same fingerprint, IP, and project" };
 
 /**
- * IP is an input, and the row stores the address too. The hash is not an anonymizer.
- * A network change is a new visitor.
+ * IP is an input and a stored column. The hash is not an anonymizer.
  * A missing fingerprint is new random material, hashed with the IP and the project.
  */
 export class IdentityResolver {

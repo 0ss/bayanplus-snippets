@@ -2,7 +2,7 @@ import { asProjectId, asVisitorId } from "../domain/model";
 import { SessionService, type EventContext, type Session, type SessionRepository } from "./sessions";
 
 /**
- * Two workers read the same open session before either writes.
+ * Two workers can race here because session ownership isn't serialized.
  * The store does not lock. That is the production shape, in one process.
  */
 export async function reproduceSessionRace(): Promise<{ plus: number; signSum: number }> {
