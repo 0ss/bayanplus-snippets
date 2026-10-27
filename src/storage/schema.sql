@@ -1,8 +1,5 @@
--- Events are facts. Sessions are derived state: sign collapses a version.
--- The session order key is the collapse key. created_at stays when a session is extended.
--- uniq() is approximate. One insert per event; ClickHouse prefers batches.
--- ORDER BY project, time, visitor, with SAMPLE BY on the visitor.
--- ip is stored, not only hashed. Column store for scans and uniqs.
+-- Events are facts. Sessions are derived: sign collapses a version.
+-- created_at stays on extend so both rows share one order key.
 
 CREATE TABLE event (
   project_id String,
@@ -20,8 +17,7 @@ CREATE TABLE event (
 )
 ENGINE = MergeTree
 PARTITION BY toYYYYMM(created_at)
-ORDER BY (project_id, created_at, visitor_id)
-SAMPLE BY visitor_id
+ORDER BY (name, project_id, visitor_id, created_at)
 TTL created_at + INTERVAL 24 MONTH;
 
 CREATE TABLE session (
@@ -36,6 +32,6 @@ CREATE TABLE session (
   updated_at DateTime('Asia/Riyadh')
 )
 ENGINE = CollapsingMergeTree(sign)
-PARTITION BY toYYYYMM(created_at)
+PARTITION BY toYYYYMM(updated_at)
 ORDER BY (project_id, visitor_id, session_id, created_at)
 TTL created_at + INTERVAL 24 MONTH;

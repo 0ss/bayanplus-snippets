@@ -1,52 +1,35 @@
 export type Metric = "visitors" | "pageviews";
 export type Dimension = "page" | "referrer" | "country" | "device";
 
-export type Filter = {
-  dimension: Dimension;
-  prefix: string;
-};
-
-export type TimeRange = {
-  from: string;
-  to: string;
-};
-
-/** Caller-supplied projectId. Auth did not choose it. */
 export type AnalyticsQuery = {
   metric: Metric;
   dimensions: Dimension[];
-  filters: Filter[];
-  timeRange: TimeRange;
+  filters: { dimension: Dimension; prefix: string }[];
+  timeRange: { from: string; to: string };
   projectId: string;
 };
 
-export const COLUMN: Record<Dimension, string> = {
+const COLUMN: Record<Dimension, string> = {
   page: "e.page",
   referrer: "e.referrer",
   country: "e.country_code",
   device: "e.device",
 };
 
-export const AGGREGATE: Record<Metric, string> = {
+const AGGREGATE: Record<Metric, string> = {
   visitors: "toUInt64(round(uniq(e.user_id) * any(_sample_factor)))",
   pageviews: "toUInt64(round(count() * any(_sample_factor)))",
 };
 
-const SAMPLE = 1_000_000;
-
-/**
- * Values are interpolated and not escaped. projectId never went through the quote cleaner.
- * uniq(user_id) is approximate, then scaled by the sample factor.
- * Project predicate is on both sides of the join. String filters are prefix matches.
- */
-export function compileHistorical(query: AnalyticsQuery): string {
+/** Typed dashboard question → ClickHouse SQL. Values are interpolated. */
+export function compileQuery(query: AnalyticsQuery): string {
   const project = `'${query.projectId}'`;
   const from = `toDateTime('${query.timeRange.from}')`;
   const to = `toDateTime('${query.timeRange.to}')`;
   const filters = query.filters
-    .map((filter) => `${COLUMN[filter.dimension]} LIKE '${filter.prefix}%'`)
+    .map((f) => `${COLUMN[f.dimension]} LIKE '${f.prefix}%'`)
     .join(" AND ");
-  const dims = query.dimensions.map((dimension) => COLUMN[dimension]);
+  const dims = query.dimensions.map((d) => COLUMN[d]);
   const selectDims = dims.length ? `, ${dims.join(", ")}` : "";
   const where = [
     `e.project_id = ${project}`,
@@ -54,11 +37,11 @@ export function compileHistorical(query: AnalyticsQuery): string {
     `e.created_at < ${to}`,
     filters,
   ]
-    .filter((part) => part.length > 0)
+    .filter(Boolean)
     .join(" AND ");
 
   return `SELECT ${AGGREGATE[query.metric]} AS value${selectDims}
-FROM event AS e SAMPLE ${SAMPLE}
+FROM event AS e SAMPLE 1000000
 INNER JOIN (
   SELECT session_id
   FROM session

@@ -1,11 +1,15 @@
 {
   "name": "bayanplus-engineering-deep-dive",
   "private": true,
-  "description": "BayanPlus ingestion, identity, sessions, and analytics, with the guarantees the system actually had.",
+  "description": "BayanPlus ingestion, identity, sessions, and analytics.",
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "fastq": "^1.17.1"
+  },
   "devDependencies": {
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "@types/node": "^22.7.4"
   }
 }
